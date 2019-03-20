@@ -1,0 +1,37 @@
+# Cobalt Strike Internal Recon Aggressor Script
+# TODO:
+#  Implement most useful PowerView cmdlets: Get-NetDomain, Get-NetForest, Get-NetForestDomain, Get-NetDomainController, Get-NetComputer, Get-NetSubnet, Get-NetFileServer
+#   Invoke-UserHunter -CheckAccess, Invoke-ShareFinder -ExcludePrint -ExcludeIPC -CheckShareAccess, Invoke-FileFinder, Find-LocalAdminAccess 
+#  Implement SPN Scanner
+#  Implement PS port scanning module 
+#  Implement Windows Host Network Information: arp -a, route print, ipconfig, netstat -anot
+#  Implement Linux Host Network Information
+
+popup beacon_top {
+	menu "&Internal Recon"{
+		menu "&Windows"{
+			menu "&PowerView" {
+				item "&Get-NetDomain" {
+					local('$bid');
+					foreach $bid ($1) {
+						getNetDomain($bid);
+					}
+				}
+			}
+			item "&WMI Enumeration Suite" {
+				local('$bid');
+				foreach $bid ($1) {
+					WMIEnumerationSuite($bid);
+				}
+			}
+		}
+	}
+}
+
+sub getNetDomain {
+	
+}
+
+sub WMIEnumerationSuite {
+
+}

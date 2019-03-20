@@ -1,0 +1,4 @@
+# Cobalt Strike Privilege Escalation Aggressor Script
+# TODO:
+#  Implement PowerUp Invoke-AllChecks
+#  Implement GPP plaintext cred finder
