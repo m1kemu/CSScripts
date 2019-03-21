@@ -1,2 +1,5 @@
 # disable windows defender
 # remove windows defender signatures
+# disable windows firewall
+# check defender status
+# check firewall status

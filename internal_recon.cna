@@ -1,37 +1,172 @@
 # Cobalt Strike Internal Recon Aggressor Script
 # TODO:
-#  Implement most useful PowerView cmdlets: Get-NetDomain, Get-NetForest, Get-NetForestDomain, Get-NetDomainController, Get-NetComputer, Get-NetSubnet, Get-NetFileServer
-#   Invoke-UserHunter -CheckAccess, Invoke-ShareFinder -ExcludePrint -ExcludeIPC -CheckShareAccess, Invoke-FileFinder, Find-LocalAdminAccess 
-#  Implement SPN Scanner
+#  Implement more PowerView cmdlets: Get-NetComputer, Get-NetSubnet, Get-NetFileServer, Invoke-FileFinder, Find-LocalAdminAccess 
+#  Implement SPN Scanner with ability to input string to search for, or just *
 #  Implement PS port scanning module 
-#  Implement Windows Host Network Information: arp -a, route print, ipconfig, netstat -anot
-#  Implement Linux Host Network Information
 
 popup beacon_top {
 	menu "&Internal Recon"{
 		menu "&Windows"{
 			menu "&PowerView" {
+				item "&Load PowerShell Script"{
+					local('$bid');
+					foreach $bid ($1) {
+						loadPSScripts($bid);
+					}
+				}
 				item "&Get-NetDomain" {
 					local('$bid');
 					foreach $bid ($1) {
 						getNetDomain($bid);
 					}
+				}				
+				item "&Get-NetForest" {
+					local('$bid');
+					foreach $bid ($1) {
+						getNetForest($bid);
+					}
 				}
+				item "&Get-NetDomainController" {
+					local('$bid');
+					foreach $bid ($1) {
+						getNetDomainController($bid);
+					}
+				}				
+				item "&Invoke-ShareFinder" {
+					local('$bid');
+					foreach $bid ($1) {
+						invokeShareFinder($bid);
+					}
+				}				
+				item "&Invoke-UserHunter" {
+					local('$bid');
+					foreach $bid ($1) {
+						invokeUserHunter($bid);
+					}
+				}				
 			}
-			item "&WMI Enumeration Suite" {
+			item "&SPN Scanner" {
 				local('$bid');
 				foreach $bid ($1) {
-					WMIEnumerationSuite($bid);
+					SPNScanner($bid);
 				}
 			}
 		}
 	}
 }
 
-sub getNetDomain {
+sub loadPSScripts {
+	$bid = $1;
+	$user1 = beacon_info($bid, "user");
+	$user2 = split(" ", $user1);	
+	$user = $user2[0];
+
+	$dialog = dialog("Load PowerShell Script", %(script => "Script..."), lambda({
+		if ("$3['script']" ismatch 'Script...') {
+			berror($bid, "\c4Please select a valid script.");
+			break;
+		}
+		else {
+			bpowershell_import($bid, $3['script']);
+		}
+	}));
+
+	dialog_description($dialog, "Loads a PowerShell script into memory.");
 	
+	drow_file($dialog, "script", "PowerShell Script:");
+	
+	dbutton_action($dialog, "Load");
+	dialog_show($dialog);
 }
 
-sub WMIEnumerationSuite {
+sub getNetDomain {
+	$bid = $1;
 
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Get-NetDomain";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+	}
+}
+
+
+sub getNetForest {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Get-NetForest";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+	}
+}
+
+sub getNetDomainControllers {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Get-NetDomainController";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+	}
+}
+
+sub invokeShareFinder {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Invoke-ShareFinder -ExcludePrint -ExcludeIPC -CheckShareAccess";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+	}
+}
+
+sub invokeUserHunter {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Invoke-UserHunter -CheckAccess";
+		bpowerpick($bid, $pscmd);
+	}
+	else {
+		berror($bid, "PowerView.ps1 must be in the same direcotry as this script.");
+	}
+}
+
+sub SPNScanner {
+	$bid = $1;
+	$dialog = dialog("SPN Scanner", %(spnstring => "SQL, FTP, *, etc."), lambda({
+		if ("$3['spnstring']" ismatch "SQL, FTP, *, etc.") {
+			berror($bid, "\c4Please enter a single SPN string to search for.");
+			break;
+		}
+		else {
+			if (-exists script_resource("SPNScanner.ps1")) {
+				bpowershell_import($bid, script_resource("SPNScanner.ps1"));
+				bpowerpick($bid, "Discover-SPNs '".$3['spnstring']."'");
+			}
+			else {
+				berror($bid, "SPNScanner.ps1 must be in the same direcotry as this script.");
+			}
+		}
+	}));
+
+	dialog_description($dialog, "Uses LDAP to identify hosts and service accounts within the network.");
+	
+	drow_text($dialog, "spnstring", "SPN String:");
+	
+	dbutton_action($dialog, "Search");
+	dialog_show($dialog);
 }

