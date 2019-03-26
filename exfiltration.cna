@@ -1,0 +1,10 @@
+# Cobalt Strike Exfiltration Aggressor Script
+# TODO:
+#  Implement file zip module
+#  Implement zip then ftp transfer
+#  Implement DNS exfil
+#  Implement dropbox exfil
+#  Implement pastebin exfil
+#  Implement github exfil
+#  Implement twitter exfil
+#  Implement Imgur exfil

@@ -1,0 +1,5 @@
+# Cobalt Strike File Download Aggressor Script
+# TODO:
+#  Implement certutil download
+#  Implement bitsadmin download
+#  Implement PowerShell download

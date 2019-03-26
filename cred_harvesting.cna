@@ -1,0 +1,5 @@
+# Cobalt Strike Credential Harvesting Aggressor Script
+# TODO:
+#  Implement kerberoasting module
+#  Implement dcsync module
+#  Implement Linux memory scraping module

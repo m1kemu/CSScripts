@@ -1,0 +1,6 @@
+# Cobalt Strike Lateral Movement Aggressor Script
+# TODO:
+#  Implement module to transfer file and execute via PowerShell remoting
+#  Implement module to transfer file and execute via WMI
+#  Implement module to identify hosts that you have access to, and attempt to spawn beacons
+#  Implement Linux psexec module

@@ -1,0 +1,7 @@
+# Cobalt Strike Host Recon Agressor Script
+# TODO:
+#  Implement UAC level check
+#  Implement WMI checks
+#  Implement computer details check
+#  Implement AV finder
+#  Implement egress check

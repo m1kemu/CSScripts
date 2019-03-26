@@ -5,6 +5,8 @@
 #  Add scheduled tasks on logoff method (lunch break persistence)
 #  Add Linux persistence
 #  Add checks for all persistence methods, ways to remove all persistence methods
+#  Add Mimikatz skeleton key module
+#  Add module for adding local/domain users
 
 popup beacon_top {
 	menu "&Persistence"{
@@ -19,6 +21,12 @@ popup beacon_top {
 				local('$bid');
 				foreach $bid ($1) {
 					deleteRegKeys($bid);
+				}
+			}
+			item "&Check Scheduled Tasks" {
+				local('$bid');
+				foreach $bid ($1) {
+					checkSchTasks($bid);
 				}
 			}
 			item "&Delete Scheduled Tasks" {
@@ -219,7 +227,7 @@ sub checkRegKeys {
 sub deleteRegKeys {
 	$bid = $1;
 
-	$dialog = dialog("Delete persistence registry keys", %(keyname => "Key Name", keypath => "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"), lambda({
+	$dialog = dialog("Delete persistence registry keys", %(keyname => "Key Name", keypath => "HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"), lambda({
 		if ("$3['keyname']" ismatch 'Key Name') {	
 			berror($bid, "\c4Please enter a key name");
 			break;
@@ -237,6 +245,31 @@ sub deleteRegKeys {
 	drow_text($dialog, "keypath", "Key Path:");
 	
 	dbutton_action($dialog, "Delete");
+	dialog_show($dialog);
+
+}
+
+
+sub checkSchTasks {
+	$bid = $1;
+
+	$dialog = dialog("Show active scheduled tasks", %(searchstring => "*"), lambda({
+		if ("$3['searchstring']" ismatch 'taskstring') {	
+			berror($bid, "\c4Please enter a task name to search for (* works too)");
+			break;
+		}
+		else {
+			$pscmd = 'Get-ScheduledTask -TaskPath "'.$3['searchstring'].'"';
+			blog($bid, "Running the following PowerShell command: $pscmd");	
+			bpowerpick($bid, $pscmd);		
+		}
+	}));
+
+	dialog_description($dialog, "Show active scheduled tasks");
+	
+	drow_text($dialog, "searchstring",  "Task Name String:");
+	
+	dbutton_action($dialog, "Search");
 	dialog_show($dialog);
 
 }
