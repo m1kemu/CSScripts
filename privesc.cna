@@ -3,3 +3,14 @@
 #  Implement PowerUp Invoke-AllChecks
 #  Implement GPP plaintext cred finder
 #  Implement smb brute force module
+#
+#  MITRE ID: T1141
+#  Prompt user for password - https://github.com/redcanaryco/atomic-red-team/blob/master/atomics/T1141/T1141.yaml
+#  https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/prompt.py
+#
+#  MITRE ID: T1038
+#  PowerSploit DLL Hijacking functionality
+#
+#  Password Spraying https://github.com/dafthack/DomainPasswordSpray
+#
+#  Domain user list generation https://github.com/dafthack/DomainPasswordSpray

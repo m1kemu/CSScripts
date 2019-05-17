@@ -5,3 +5,17 @@
 #  Implement computer details check
 #  Implement AV finder
 #  Implement egress check
+#
+#  Clipboard monitoring - https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/clipboard_monitor.py
+#
+#  Packet capture - Windows - https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/packet_capture.py
+#
+#  Dump Chrome contents - https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/ChromeDump.py
+#
+#  Dump Firefox contents - https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/FoxDump.py
+#
+#  Webcam record - https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/WebcamRecorder.py
+#
+#  Browser history/bookmark search - https://github.com/EmpireProject/Empire/blob/master/lib/modules/powershell/collection/browser_data.py
+#  
+#  EDR Enumeration https://github.com/harleyQu1nn/AggressorScripts/blob/master/EDR.cna

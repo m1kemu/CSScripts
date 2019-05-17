@@ -1,5 +1,6 @@
 # Cobalt Strike Exfiltration Aggressor Script
 # TODO:
+#  https://github.com/samratashok/nishang/blob/master/Utility/Do-Exfiltration.ps1
 #  Implement file zip module
 #  Implement zip then ftp transfer
 #  Implement DNS exfil
